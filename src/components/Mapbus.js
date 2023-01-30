@@ -1,8 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
-const { kakao } = window;
+import Mynavbar from './Mynavbar';
 
-function Mymap() {
+function Mapbus() {
+    const { kakao } = window;
+    let [cnt, setCnt] = useState(600);
+    let { db } = useSelector((state) => { return state })
+
+
     useEffect(() => {
         const mapContainer = document.getElementById('map'),
             // 지도를 표시할 div
@@ -18,9 +23,19 @@ function Mymap() {
         const map = new kakao.maps.Map(mapContainer, mapOption);
 
 
-        //마커 좌표
-        const Point = new kakao.maps.LatLng(gps.gps[0].x, gps.gps[0].y);
+        const myPath = [db.map(function (a, i) {
+            return (new kakao.maps.LatLng(
+                a.y_gps, a.x_gps)
+            );
+        })]
 
+
+
+        //마커 좌표
+        const Point = new kakao.maps.LatLng(
+            db[cnt]?.y_gps,
+            db[cnt]?.x_gps,
+        )
         // 마커 이미지의 주소1
         const markerImageUrl = 'https://img.icons8.com/plasticine/512/bus.png',
             markerImageSize = new kakao.maps.Size(45, 45), // 마커 이미지의 크기
@@ -30,67 +45,76 @@ function Mymap() {
         // 마커 이미지를 생성한다 2
         const markerImage = new kakao.maps.MarkerImage(markerImageUrl, markerImageSize, markerImageOptions);
 
-
         const marker = new kakao.maps.Marker({
             position: Point,    // 마커의 좌표
             image: markerImage, // 마커의 이미지
             map: map // 마커를 표시할 지도 객체
 
+
+        },);
+
+        // map.addOverlayMapTypeId(kakao.maps.MapTypeId.TRAFFIC);
+
+        kakao.maps.event.addListener(marker, 'click', function () {
+            goBus()
         });
 
+        // map.addOverlayMapTypeId(kakao.maps.MapTypeId.TRAFFIC);
 
-        const zoomControl = new kakao.maps.ZoomControl();
-        map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
-        //지도 확대축소
+        var content =
+            '<button>버스종점!</button>';
 
-        //gps db가져와서 mpa함수로 맵에 경로 표시
-        const myPath = gps1.gps1.map(function (a, i) {
-            return (new kakao.maps.LatLng(
-                a.GPS_Y, a.GPS_X)
-            );
-        })
-        // console.log("myPath=", path.path[0])
-        // console.log(gps1.gps1[0])
+        // 커스텀 오버레이가 표시될 위치입니다 
+        var position = new kakao.maps.LatLng(35.245, 129.1592197087737);
 
-        //경로를 맵함수 활용해서 반복문으로 처리해서 DB데이터 활용
+        // 커스텀 오버레이를 생성합니다
+        var customOverlay = new kakao.maps.CustomOverlay({
+            position: position,
+            content: content
+        });
 
+        // 커스텀 오버레이를 지도에 표시합니다
+        customOverlay.setMap(map);
         // 지도에 선을 표시한다
         const polyline = new kakao.maps.Polyline({
             map: map, // 선을 표시할 지도 객체 
             path: myPath, // 선을 구성하는 좌표 배열
             strokeWeight: 2, // 선의 두께
-            strokeColor: '#FF0000', // 선 색
+            strokeColor: 'darkslategray', // 선 색
             strokeOpacity: 1, // 선 투명도
             strokeStyle: 'solid', // 선 스타일
             endArrow: 'True'//화살표
 
         });
-        //strokeColor를 변화가능한 state나 props로 주고
-        //{1이면 ? strokeColor:red : null }
         marker.setMap(map); //마커 지도에 출력
-        polyline.setMap(map); //폴리라인 지도에 출력
-    }, [])
 
-    let gps = useSelector((state) => { return state })
-    let gps1 = useSelector((state) => { return state })
-    let path = useSelector((state) => { return state })
+        const goBus = setInterval(() => {
+            setCnt(cnt + 100);
+        }, 1000);
+        return () => clearInterval(goBus);
+
+    }, [{ db }])
 
 
+    console.log(cnt)
 
     return (
         <>
+            <button onClick={() => { }}>모의주행{cnt}</button>
             <div
                 id="map" style={{
-                    width: '97%',
+                    width: '90%',
                     height: '800px'
                 }}>
-            </div>
 
+
+            </div>
         </>
     );
 }
 
-export default Mymap;
+export default Mapbus;
+
 
 
 
